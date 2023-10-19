@@ -14,7 +14,7 @@ In native Windows code, the most basic method of retrieving a module base is usi
 1. If passed a `NULL` argument, get the current image base from a global variable referencing the Process Environment Block data structure (PEB) and accessing the offset `0x10` , correlating to `PPEB->ImageBase` (Windows 10 19045) and return the address.
 2. Call a second function from `ntdll` to locate and return the image base of a separate module.
 
-In the second case, `GetModuleHandle` will call `LdrGetDllHandle`.`LdrGetDllHandle` lives in `ntdll` and itself diverts to `LdrGetDllHandleEx`. This will kick of a series of calls that will eventually access the PEB to get the module base by name or path.
+In the second case, `GetModuleHandle` will call `LdrGetDllHandle`.`LdrGetDllHandle` lives in `ntdll` and itself diverts to `LdrGetDllHandleEx`. This will kick off a series of calls that will eventually access the PEB to get the module base by name or path.
 
 The conventional wisdom in malware writing is to be wary of carelessly using such procedures, because at any point in the call chain, defense tools may have inserted some sort of monitoring hook. Instead, malware authors very often opt to implement the process manually.
 
@@ -28,7 +28,7 @@ On x64 Windows, the PEB is a data structure accessible using the `gs` segment re
 4. In each iteration, compute the address of the current module's `LDR_MODULE` structure based on the list entry address.
 5. Check if the `BaseDllName.Buffer` of the `LDR_MODULE` is not `NULL`:
   - If it is not `NULL`, convert the name to a character string.
-  - Compare the names and return `BaseAddress` is they match
+  - Compare the names and return `BaseAddress` if they match
 6. Move to the next list entry.
 
 ## Monitoring of Module Base Retrieval Methods
@@ -43,7 +43,7 @@ Through emulation or debugging, it is possible to monitor access to the PEB or T
 
 ***Static Signatures***
 
-Finally, a very simple detection for code accessing the PEB or TEB is to match suspicious code to a pattern matching a move operation with the x86_64 segment override prefix for the `gs ` segment register. An example pattern would be something like:
+Finally, a very simple detection for code accessing the PEB or TEB is to match suspicious code to a pattern matching a move operation with the x86_64 segment override prefix for the `gs` segment register. An example pattern would be something like:
 ```
 65 * 8b 04 25 60 00 00 00 00 ; PEB access using 0x65 segment override prefix
 65 * 8b 04 25 30 00 00 00 00 ; TEB access using 0x65 segment override prefix
@@ -51,7 +51,7 @@ Finally, a very simple detection for code accessing the PEB or TEB is to match s
 
 ## ASLR Analysis
 
-One challenge in locating modules without the aid of conventional resources is ASLR. Microsoft introduced its first Windows implementation of ASLR with Windows Vista in 2007{{< reference content="https://en.wikipedia.org/wiki/Address_space_layout_randomization" citation="" >}}. Microsoft's implementation differs from others due to several reasons. As a result, randomization of module addresses is less complete than that on Linux{{< reference content="https://www.mandiant.com/resources/blog/six-facts-about-address-space-layout-randomization-on-windows" citation="" >}}. This, among other peculiarities of Windows ASLR, introduces weaknesses that can be be taken advantage of by exploit and malware developers. 
+One challenge in locating modules without the aid of conventional resources is ASLR. Microsoft introduced its first Windows implementation of ASLR with Windows Vista in 2007{{< reference content="https://en.wikipedia.org/wiki/Address_space_layout_randomization" citation="" >}}. Microsoft's implementation differs from others due to several reasons. As a result, randomization of module addresses is less complete than that on Linux{{< reference content="https://www.mandiant.com/resources/blog/six-facts-about-address-space-layout-randomization-on-windows" citation="" >}}. This, among other peculiarities of Windows ASLR, introduces weaknesses that can be taken advantage of by exploit and malware developers. 
 
 ***Slide Reuse Across Processes with Same Name***
 
@@ -71,9 +71,9 @@ When its possible obtain information about the instruction pointer, the code of 
 
 ### Observations on System Module Address Predictibility
 
-On a test system, a test harness was written to spawn 200 unique processes. Each process calls back to the parent over a TCP socket with with its `kernel32`, `ntdll`, and main image load addresses. The names of the executable images are modified before spawn to force the `.exe` data to be loaded to a new base address for each process.
+On a test system, a test harness was written to spawn 200 unique processes. Each process calls back to the parent over a TCP socket with its `kernel32`, `ntdll`, and main image load addresses. The names of the executable images are modified before spawn to force the `.exe` data to be loaded to a new base address for each process.
 
-Across population sizes of 100 and 200 processes, the distribution of distances between main module, kernel32, and ntdll was found to be uniform. This is expected, as ASLR uses cryptographic methods to assign load addresses. More interestingly, however, the following observations were recorded:
+Across population sizes of 100 and 200 processes, the distribution of distances between main module, kernel32, and `ntdll` was found to be uniform. This is expected, as ASLR uses cryptographic methods to assign load addresses. More interestingly, however, the following observations were recorded:
 
 ***Run 1***
 
@@ -144,9 +144,9 @@ INT main()
 
 ***Method 1 Advantages***
 
-This method is *almost* as robust at enabling module discovery as standard methods such as `GetModuleHandle` or using the PEB. The entire list of modules that are specified in a given executable's headers may be resolved without calling any APIs or accessing the PEB.
+This method is *almost* as robust at enabling module discovery as standard methods such as GetModuleHandle or using the PEB. The entire list of modules that are specified in a given executable's headers may be resolved without calling any APIs or accessing the PEB.
 
-***Method 1 Disdvantages***
+***Method 1 Disadvantages***
 
 The main downside of this method compared to traditional means is that modules loaded at runtime will not be discoverable merely by searching through the known import directories. Additionally, this method requires knowledge of an address backed by a PE image. This means that shellcode threads will need to be provided this information. Finally, there is room for error in the pattern matching and PE format parsing.
 
@@ -165,8 +165,7 @@ The general algorithm is as follows:
 
 4. Module Name Validation: Once a valid module base has been found, traverse its headers and see if it's reported name hash matches the target.
 
-```
-
+```c++
 // Metrics for address prediction
 #define SYSTEM_DLL_LOWER_BOUND  0x00007FF000000000ULL
 #define SYSTEM_DLL_UPPER_BOUND  0xFFFF800000000000ULL

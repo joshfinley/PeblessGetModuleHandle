@@ -3,7 +3,7 @@
 
 Native Windows code is overwhelmingly position-dependant. This is the case for a multitude of reasons, including legacy support, performance, and simplicity. On the other hand, this simultaneously introduces challenges for both attack and defense. For what is now decades, Windows malware has often required some degree of position independence, especially in shellcode and first-stage payloads. Additionally, due to issues of stealth and evasion, malware must frequently work without the aid of conveniences offered by the operating system and external libraries. Examples include the typical utilities that allow dynamic dependency resolution.
 
-This article reviews standard methods for retrieving module base addresses and introduces two new methods that do not rely on API calls or the Process Environment Block (PEB){{< footnote >}}Unless otherwise noted, all testing was performed on Windows 10 19045 with the bottom-up randomization and high-entropy ASLR enabled.{{< /footnote >}}. These are introduced as *Module Discovery by Code Traversal* and *Module Discovery by Heuristic Stack Analysis.* These methods only rely on information available to the running code and are suitable for use under certain circumstances where access to API calls or the Process Environment Block is impossible or unwanted. The methods do have their own limitations, but are fairly simple and have unique advantages and disdavantages in certain situations.
+This article reviews standard methods for retrieving module base addresses and introduces two new methods that do not rely on API calls or the Process Environment Block (PEB). These are introduced as *Module Discovery by Code Traversal* and *Module Discovery by Heuristic Stack Analysis.* These methods only rely on information available to the running code and are suitable for use under certain circumstances where access to API calls or the Process Environment Block is impossible or unwanted. The methods do have their own limitations, but are fairly simple and have unique advantages and disadvantages in certain situations.
 
 ## Method Review
 
@@ -39,7 +39,7 @@ The most straightforward way of monitoring attempts to retrieve module base addr
 
 ***PEB Access Monitoring***
 
-Through emulation or debugging, it is possible to monitor access to the PEB or TEB {{< reference content="https://github.com/mandiant/speakeasy" >}}. With these tools, access to PEB memory is straightforward to detect.
+Through emulation or debugging, it is possible to monitor access to the PEB or TEB. With these tools, access to PEB memory is straightforward to detect.
 
 ***Static Signatures***
 
@@ -51,7 +51,7 @@ Finally, a very simple detection for code accessing the PEB or TEB is to match s
 
 ## ASLR Analysis
 
-One challenge in locating modules without the aid of conventional resources is ASLR. Microsoft introduced its first Windows implementation of ASLR with Windows Vista in 2007{{< reference content="https://en.wikipedia.org/wiki/Address_space_layout_randomization" citation="" >}}. Microsoft's implementation differs from others due to several reasons. As a result, randomization of module addresses is less complete than that on Linux{{< reference content="https://www.mandiant.com/resources/blog/six-facts-about-address-space-layout-randomization-on-windows" citation="" >}}. This, among other peculiarities of Windows ASLR, introduces weaknesses that can be taken advantage of by exploit and malware developers. 
+One challenge in locating modules without the aid of conventional resources is ASLR. Microsoft introduced its first Windows implementation of ASLR with Windows Vista in 2007. Microsoft's implementation differs from others due to several reasons. As a result, randomization of module addresses is less complete than that on Linux. This, among other peculiarities of Windows ASLR, introduces weaknesses that can be taken advantage of by exploit and malware developers. 
 
 ***Slide Reuse Across Processes with Same Name***
 
